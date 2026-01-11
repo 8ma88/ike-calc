@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>池メンテナンス見積り Pro</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f0f2f5; padding: 15px; color: #333; margin: 0; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; font-size: 1.3rem; color: #1a73e8; margin-bottom: 20px; }
+        h2 { font-size: 1rem; border-left: 4px solid #1a73e8; padding-left: 10px; margin-top: 20px; background: #f8f9fa; padding: 8px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        th { font-size: 0.8rem; color: #666; text-align: left; padding: 5px; }
+        td { padding: 5px; }
+        input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 1rem; }
+        
+        .btn-add { background-color: #34a853; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; margin-bottom: 10px; }
+        .btn-calc { width: 100%; padding: 15px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .btn-remove { background: #ff4d4d; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; }
+
+        .result-box { margin-top: 25px; padding: 20px; border: 2px solid #1a73e8; border-radius: 10px; background: #e8f0fe; display: none; }
+        .result-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 1rem; }
+        .total-price { font-size: 1.4rem; font-weight: bold; color: #d93025; border-top: 1px solid #1a73e8; padding-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>池の見積りシミュレーター</h1>
+
+    <label><b>池の名称</b></label>
+    <input type="text" id="pondName" placeholder="例：道池" style="margin-bottom:20px;">
+
+    <h2>1. 平面エリア (機械)</h2>
+    <table id="flatTable">
+        <thead><tr><th>場所 (東西南北など)</th><th>長さ(m)</th><th>幅(m)</th><th></th></tr></thead>
+        <tbody>
+            <tr>
+                <td><input type="text" placeholder="例：東側" class="f-name"></td>
+                <td><input type="number" class="f-len" value="0"></td>
+                <td><input type="number" class="f-wid" value="0"></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+    <button class="btn-add" onclick="addRow('flatTable')">+ 場所を追加</button>
+
+    <h2>2. 法面エリア (手刈り)</h2>
+    <table id="slopeTable">
+        <thead><tr><th>場所 (内・外など)</th><th>長さ(m)</th><th>高さ(m)</th><th></th></tr></thead>
+        <tbody>
+            <tr>
+                <td><input type="text" placeholder="例：内法面" class="s-name"></td>
+                <td><input type="number" class="s-len" value="0"></td>
+                <td><input type="number" class="s-hei" value="0"></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+    <button class="btn-add" onclick="addRow('slopeTable')">+ 場所を追加</button>
+
+    <button class="btn-calc" onclick="calculate()">見積りを計算する</button>
+
+    <div class="result-box" id="resultArea">
+        <h3 id="resTitle" style="margin-top:0;">見積結果</h3>
+        <div class="result-row"><span>平面 合計面積:</span> <span><b id="totalFlatArea">0</b> ㎡</span></div>
+        <div class="result-row"><span>法面 合計面積:</span> <span><b id="totalSlopeArea">0</b> ㎡</span></div>
+        <hr>
+        <div class="result-row"><span>必要機械（2000㎡/日）:</span> <span><b id="resMachDays">0</b> 日</span></div>
+        <div class="result-row"><span>必要人数（600㎡/人）:</span> <span><b id="resLabCount">0</b> 人</span></div>
+        <hr>
+        <div class="result-row total-price"><span>合計概算費用:</span> <span>¥<span id="resTotalPrice">0</span></span></div>
+    </div>
+</div>
+
+<script>
+    function addRow(tableId) {
+        const table = document.getElementById(tableId).getElementsByTagName('tbody')[0];
+        const newRow = table.insertRow();
+        const isFlat = tableId === 'flatTable';
+        newRow.innerHTML = `
+            <td><input type="text" class="${isFlat ? 'f-name' : 's-name'}"></td>
+            <td><input type="number" class="${isFlat ? 'f-len' : 's-len'}" value="0"></td>
+            <td><input type="number" class="${isFlat ? 'f-wid' : 's-hei'}" value="0"></td>
+            <td><button class="btn-remove" onclick="this.parentElement.parentElement.remove()">×</button></td>
+        `;
+    }
+
+    function calculate() {
+        let totalFlatArea = 0;
+        let totalSlopeArea = 0;
+
+        // 平面の集計
+        const fLens = document.getElementsByClassName('f-len');
+        const fWids = document.getElementsByClassName('f-wid');
+        for(let i=0; i<fLens.length; i++) {
+            totalFlatArea += (parseFloat(fLens[i].value) || 0) * (parseFloat(fWids[i].value) || 0);
+        }
+
+        // 法面の集計
+        const sLens = document.getElementsByClassName('s-len');
+        const sHeis = document.getElementsByClassName('s-hei');
+        for(let i=0; i<sLens.length; i++) {
+            totalSlopeArea += (parseFloat(sLens[i].value) || 0) * (parseFloat(sHeis[i].value) || 0);
+        }
+
+        // 日数・人数の計算 (端数切り上げ)
+        const machDays = Math.ceil(totalFlatArea / 2000);
+        const labCount = Math.ceil(totalSlopeArea / 600);
+
+        // 金額 (単価設定)
+        const machCost = machDays * 20000;
+        const labCost = labCount * 25000;
+
+        // 表示
+        document.getElementById('totalFlatArea').innerText = totalFlatArea.toLocaleString();
+        document.getElementById('totalSlopeArea').innerText = totalSlopeArea.toLocaleString();
+        document.getElementById('resMachDays').innerText = machDays;
+        document.getElementById('resLabCount').innerText = labCount;
+        document.getElementById('resTotalPrice').innerText = (machCost + labCost).toLocaleString();
+        document.getElementById('resultArea').style.display = 'block';
+        
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+</script>
+
+</body>
+</html>
