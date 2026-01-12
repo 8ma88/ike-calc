@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>池の見積り v8.0 (完成版)</title>
+    <title>池の見積り v8.1 (完結版)</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; padding: 10px; color: #333; }
         .container { max-width: 650px; margin: 0 auto; padding-bottom: 80px; }
@@ -52,6 +52,7 @@
         
         .detail-item.main-cost { font-weight: bold; margin-top: 8px; border-top: 1px dashed #ccc; padding-top: 5px; }
         .detail-item.overhead { color: #f57c00; }
+        .detail-item.tax-row { color: #555; font-weight: bold; }
         
         .diff-badge { background: #d93025; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; display: block; margin: 0 auto 5px auto; width: fit-content; }
         .guts-mark { color: #f57c00; font-size: 0.7rem; border: 1px solid #ffe0b2; background:#fff3e0; padding: 0 3px; border-radius: 4px; margin-left: 3px; }
@@ -73,7 +74,7 @@
 
 <div class="container">
     <h1>池の見積りシミュレーター</h1>
-    <div class="subtitle">v8.0 (完成版)</div>
+    <div class="subtitle">v8.1 (消費税対応版)</div>
     
     <div class="card">
         <div class="input-row">
@@ -88,7 +89,7 @@
                 <input type="number" id="travelCost" placeholder="0">
             </div>
         </div>
-        <div style="font-size:0.75rem; color:#888;">※交通費は消費税・経費(10%)計算の対象外として最後に加算されます。</div>
+        <div style="font-size:0.75rem; color:#888;">※交通費は消費税計算の対象外として最後に加算されます。</div>
     </div>
 
     <div class="section-title">1. 平面エリア (機械)</div>
@@ -203,16 +204,14 @@
         document.getElementById('slope-container').appendChild(div);
     }
 
-    // ★重要: 最低1人保証ロジック (v7.1仕様)
+    // 最低1人保証ロジック
     function smartCeil(value) {
         const integerPart = Math.floor(value);
         const decimalPart = parseFloat((value - integerPart).toFixed(4));
         
-        // 0.1人でも仕事があるなら最低1人
         if (integerPart === 0 && decimalPart > 0) {
             return { val: 1, guts: false };
         }
-        // 15%残業ルール
         if (decimalPart > 0 && decimalPart <= 0.15) {
             return { val: integerPart, guts: true };
         }
@@ -313,7 +312,7 @@
         };
     }
 
-    // ★重要: 表示ロジックの修正 (詳細内訳の復活)
+    // ★重要: 表示ロジックの修正 (消費税追加)
     function renderTable(tableId, safe, agg) {
         const unitMachineA = 20000; 
         const unitMachineB = 60000; 
@@ -328,10 +327,12 @@
         const calcTotal = (data) => {
             const mCost = data.days * unitMachine;
             const lCost = data.labor * unitLabor;
-            const baseTotal = mCost + lCost;
-            const overhead = Math.floor(baseTotal * 0.10);
-            const grandTotal = baseTotal + overhead + data.travel;
-            return { mCost, lCost, baseTotal, overhead, grandTotal };
+            const baseTotal = mCost + lCost; // 作業費計
+            const overhead = Math.floor(baseTotal * 0.10); // 経費
+            const targetForTax = baseTotal + overhead; // 税対象額
+            const tax = Math.floor(targetForTax * 0.10); // 消費税
+            const grandTotal = targetForTax + tax + data.travel; // 交通費は最後
+            return { mCost, lCost, baseTotal, overhead, tax, grandTotal };
         };
 
         const s = calcTotal(safe);
@@ -367,10 +368,13 @@
                 </div>
 
                 <div class="detail-item overhead">
-                    <span>経費(10%):</span> <span>+¥${costData.overhead.toLocaleString()}</span>
+                    <span>経費(10%):</span> <span class="sub-cost">+¥${costData.overhead.toLocaleString()}</span>
+                </div>
+                <div class="detail-item tax-row">
+                    <span>消費税(10%):</span> <span class="sub-cost">+¥${costData.tax.toLocaleString()}</span>
                 </div>
                 <div class="detail-item">
-                    <span>交通費:</span> <span>+¥${data.travel.toLocaleString()}</span>
+                    <span>交通費:</span> <span class="sub-cost">+¥${data.travel.toLocaleString()}</span>
                 </div>
             </div>
         `;
