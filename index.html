@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>池の見積り v7.1 (内訳・消費税対応)</title>
+    <title>池の見積り v8.0 (完成版)</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; padding: 10px; color: #333; }
-        .container { max-width: 700px; margin: 0 auto; padding-bottom: 80px; }
+        .container { max-width: 650px; margin: 0 auto; padding-bottom: 80px; }
         
         h1 { text-align: center; font-size: 1.4rem; color: #1a73e8; margin-bottom: 5px; }
         .subtitle { text-align: center; font-size: 0.8rem; color: #666; margin-bottom: 20px; }
@@ -31,7 +31,6 @@
         /* 結果エリア */
         .result-container { display: none; margin-top: 20px; }
         
-        /* 面積詳細 */
         .area-list { font-size: 0.85rem; margin-bottom: 10px; }
         .area-row { display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 2px; margin-bottom: 4px;}
         .area-total { display: flex; justify-content: space-between; font-weight: bold; color: #333; border-top: 1px solid #eee; padding-top: 5px; }
@@ -42,36 +41,31 @@
         .compare-table th { background: #f8f9fa; padding: 10px; font-size: 0.85rem; color: #555; text-align: center; border-bottom: 2px solid #ddd; width: 50%; }
         .compare-table td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; vertical-align: top; }
         
-        .price-lg { font-size: 1.6rem; font-weight: bold; color: #d93025; display: block; text-align: center; margin-bottom: 5px; border-bottom: 2px solid #d93025; padding-bottom: 5px;}
-        
+        .price-lg { font-size: 1.5rem; font-weight: bold; color: #d93025; display: block; text-align: center; margin-bottom: 5px; border-bottom: 2px solid #d93025; padding-bottom: 5px;}
         .detail-list { font-size: 0.8rem; color: #444; }
+        
         .detail-item { display: flex; justify-content: space-between; margin-bottom: 3px; }
+        /* v7.1のデザインに戻す */
+        .detail-item span:last-child { font-weight: normal; color: #333; } 
         
-        /* 内訳テキスト */
-        .breakdown { font-size: 0.7rem; color: #888; display: block; margin-top: -2px; margin-bottom: 2px;}
-
-        /* 計算区切り線 */
-        .line-sub { border-top: 1px solid #ddd; margin: 5px 0; }
-        .line-main { border-top: 2px solid #333; margin: 8px 0; }
+        .detail-item.sub-info { font-size: 0.7rem; color: #888; display: block; text-align: right; margin-top: -2px; margin-bottom: 4px; }
         
-        .cost-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
-        .cost-row.main { font-weight: bold; color: #333; }
-        .cost-row.tax { color: #555; }
-        .cost-row.overhead { color: #f57c00; }
+        .detail-item.main-cost { font-weight: bold; margin-top: 8px; border-top: 1px dashed #ccc; padding-top: 5px; }
+        .detail-item.overhead { color: #f57c00; }
         
         .diff-badge { background: #d93025; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; display: block; margin: 0 auto 5px auto; width: fit-content; }
         .guts-mark { color: #f57c00; font-size: 0.7rem; border: 1px solid #ffe0b2; background:#fff3e0; padding: 0 3px; border-radius: 4px; margin-left: 3px; }
         .section-title { font-size: 1rem; font-weight: bold; margin: 20px 0 10px 0; border-left: 4px solid #333; padding-left: 10px; }
 
-        /* 印刷用 */
         @media print {
             body { background-color: white; padding: 0; }
             .container { max-width: 100%; padding: 0; }
             .btn-add, .btn-delete, .btn-calc, .btn-print, .input-help { display: none !important; }
             input { border: none; background: transparent; padding: 0; font-weight: bold; }
             .card { box-shadow: none; border: 1px solid #eee; margin-bottom: 10px; page-break-inside: avoid; }
+            h1 { font-size: 1.5rem; color: black; }
+            .result-container { display: block !important; }
             .compare-table th { background-color: #eee !important; color: black !important; -webkit-print-color-adjust: exact; }
-            td[style*="background:#fff8e1"] { background-color: #fff !important; } 
         }
     </style>
 </head>
@@ -79,7 +73,7 @@
 
 <div class="container">
     <h1>池の見積りシミュレーター</h1>
-    <div class="subtitle">v7.1 (詳細内訳・消費税対応版)</div>
+    <div class="subtitle">v8.0 (完成版)</div>
     
     <div class="card">
         <div class="input-row">
@@ -94,7 +88,7 @@
                 <input type="number" id="travelCost" placeholder="0">
             </div>
         </div>
-        <div style="font-size:0.75rem; color:#888;">※交通費は消費税計算の対象外として最後に加算されます。</div>
+        <div style="font-size:0.75rem; color:#888;">※交通費は消費税・経費(10%)計算の対象外として最後に加算されます。</div>
     </div>
 
     <div class="section-title">1. 平面エリア (機械)</div>
@@ -155,12 +149,12 @@
             <tbody id="tableB"></tbody>
         </table>
 
-        <button class="btn-print" onclick="window.print()">🖨️ 見積書をPDF保存/印刷</button>
+        <button class="btn-print" onclick="window.print()">🖨️ この見積書をPDF保存/印刷</button>
     </div>
 </div>
 
 <script>
-    const MIN_HAMMER_WIDTH = 0.8;
+    const MIN_HAMMER_WIDTH = 0.8; 
 
     window.onload = function() {
         addFlatRow();
@@ -209,9 +203,16 @@
         document.getElementById('slope-container').appendChild(div);
     }
 
+    // ★重要: 最低1人保証ロジック (v7.1仕様)
     function smartCeil(value) {
         const integerPart = Math.floor(value);
         const decimalPart = parseFloat((value - integerPart).toFixed(4));
+        
+        // 0.1人でも仕事があるなら最低1人
+        if (integerPart === 0 && decimalPart > 0) {
+            return { val: 1, guts: false };
+        }
+        // 15%残業ルール
         if (decimalPart > 0 && decimalPart <= 0.15) {
             return { val: integerPart, guts: true };
         }
@@ -273,13 +274,12 @@
             slopeCap: 720, hammerCap: 2400, hammerSpeed: 4800, flailCap: 6000, flailSpeed: 12000
         });
 
-        renderTable('tableA', resSafe.planA, resAgg.planA, 'A');
-        renderTable('tableB', resSafe.planB, resAgg.planB, 'B');
+        renderTable('tableA', resSafe.planA, resAgg.planA);
+        renderTable('tableB', resSafe.planB, resAgg.planB);
     }
 
     function calcScenario(flats, slopeTotal, travelCost, settings) {
         const slopeDays = slopeTotal / settings.slopeCap;
-
         let a_DaysBill=0, a_WorkLoad=0;
         let b_DaysBill=0, b_WorkLoad=0;
 
@@ -313,31 +313,25 @@
         };
     }
 
-    function renderTable(tableId, safe, agg, planType) {
+    // ★重要: 表示ロジックの修正 (詳細内訳の復活)
+    function renderTable(tableId, safe, agg) {
+        const unitMachineA = 20000; 
+        const unitMachineB = 60000; 
         const unitLabor = 25000;
-        
-        // 内訳テキスト設定
-        let machineText = "";
-        let unitMachine = 0;
+        const isPlanA = (tableId === 'tableA');
+        const unitMachine = isPlanA ? unitMachineA : unitMachineB;
 
-        if (planType === 'A') {
-            unitMachine = 20000;
-            machineText = "(2万)";
-        } else {
-            unitMachine = 60000;
-            machineText = "(フ3万+ハ2万+積1万)";
-        }
+        // 内訳テキスト
+        const machineDesc = isPlanA ? '(単価2万)' : '(フ3万+ハ2万+積1万)';
+        const laborDesc = '(単価2.5万)';
 
         const calcTotal = (data) => {
             const mCost = data.days * unitMachine;
             const lCost = data.labor * unitLabor;
             const baseTotal = mCost + lCost;
-            const overhead = Math.floor(baseTotal * 0.10); // 10%経費
-            const subTotal = baseTotal + overhead; // 経費込み小計
-            const tax = Math.floor(subTotal * 0.10); // 消費税
-            const grandTotal = subTotal + tax + data.travel; // 最終合計
-            
-            return { mCost, lCost, baseTotal, overhead, subTotal, tax, grandTotal };
+            const overhead = Math.floor(baseTotal * 0.10);
+            const grandTotal = baseTotal + overhead + data.travel;
+            return { mCost, lCost, baseTotal, overhead, grandTotal };
         };
 
         const s = calcTotal(safe);
@@ -350,39 +344,33 @@
             <span class="price-lg">¥${costData.grandTotal.toLocaleString()}</span>
             <div class="detail-list">
                 <div class="detail-item">
-                    <span>機械工期:</span> <span>${data.days}日 <span class="breakdown">${machineText}</span></span>
+                    <span>機械工期:</span> <span>${data.days}日</span>
                 </div>
                 <div class="detail-item">
-                    <span>必要人工:</span> <span>${data.labor}人${gutsHtml(data.guts)} <span class="breakdown">(@2.5万)</span></span>
+                    <span>必要人工:</span> <span>${data.labor}人${gutsHtml(data.guts)}</span>
                 </div>
                 
-                <div class="line-sub"></div>
+                <hr style="margin:5px 0; border:0; border-top:1px dashed #eee;">
                 
                 <div class="detail-item">
                     <span>機械代:</span> <span>¥${costData.mCost.toLocaleString()}</span>
                 </div>
+                <div class="detail-item sub-info">
+                    ${machineDesc}
+                </div>
+
                 <div class="detail-item">
                     <span>人件費:</span> <span>¥${costData.lCost.toLocaleString()}</span>
                 </div>
-                
-                <div class="cost-row main" style="margin-top:5px;">
-                    <span>作業費計:</span> <span>¥${costData.baseTotal.toLocaleString()}</span>
+                <div class="detail-item sub-info">
+                    ${laborDesc}
                 </div>
-                <div class="cost-row overhead">
+
+                <div class="detail-item overhead">
                     <span>経費(10%):</span> <span>+¥${costData.overhead.toLocaleString()}</span>
                 </div>
-                
-                <div class="line-sub" style="border-top-style:dashed;"></div>
-                
-                <div class="cost-row">
-                    <span>経費込小計:</span> <span>¥${costData.subTotal.toLocaleString()}</span>
-                </div>
-                <div class="cost-row tax">
-                    <span>消費税(10%):</span> <span>+¥${costData.tax.toLocaleString()}</span>
-                </div>
-                
                 <div class="detail-item">
-                    <span>交通費(税無):</span> <span>+¥${data.travel.toLocaleString()}</span>
+                    <span>交通費:</span> <span>+¥${data.travel.toLocaleString()}</span>
                 </div>
             </div>
         `;
