@@ -3,125 +3,350 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>池メンテナンス見積り Pro</title>
+    <title>池の見積り計算 v6.2</title>
     <style>
-        body { font-family: sans-serif; background-color: #f0f2f5; padding: 15px; color: #333; margin: 0; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1 { text-align: center; font-size: 1.3rem; color: #1a73e8; margin-bottom: 20px; }
-        h2 { font-size: 1rem; border-left: 4px solid #1a73e8; padding-left: 10px; margin-top: 20px; background: #f8f9fa; padding: 8px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; padding: 10px; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding-bottom: 60px; }
         
-        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-        th { font-size: 0.8rem; color: #666; text-align: left; padding: 5px; }
-        td { padding: 5px; }
-        input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 1rem; }
+        h1 { text-align: center; font-size: 1.3rem; color: #1a73e8; margin-bottom: 15px; }
         
-        .btn-add { background-color: #34a853; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; margin-bottom: 10px; }
-        .btn-calc { width: 100%; padding: 15px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; margin-top: 20px; }
-        .btn-remove { background: #ff4d4d; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; position: relative; }
+        .input-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: flex-end; }
+        .input-group { flex: 1; }
+        .input-group.small { flex: 0.7; }
+        
+        label { display: block; font-size: 0.8rem; font-weight: bold; color: #666; margin-bottom: 4px; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; background: #fafafa; }
+        input:focus { border-color: #1a73e8; outline: none; background: #fff; }
 
-        .result-box { margin-top: 25px; padding: 20px; border: 2px solid #1a73e8; border-radius: 10px; background: #e8f0fe; display: none; }
-        .result-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 1rem; }
-        .total-price { font-size: 1.4rem; font-weight: bold; color: #d93025; border-top: 1px solid #1a73e8; padding-top: 10px; }
+        .btn-add { background-color: #e8f0fe; color: #1a73e8; border: none; padding: 10px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .btn-delete { background-color: #ffcccc; color: #d32f2f; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;}
+
+        .btn-calc { background-color: #1a73e8; color: white; border: none; padding: 16px; width: 100%; border-radius: 10px; font-size: 1.2rem; font-weight: bold; margin-top: 20px; box-shadow: 0 4px 10px rgba(26, 115, 232, 0.3); cursor: pointer; }
+        .btn-calc:active { transform: scale(0.98); }
+
+        /* 結果表示エリア */
+        .result-container { display: none; margin-top: 20px; }
+        
+        .area-detail-card { background: #fff; border: 1px solid #ddd; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
+        .area-list { font-size: 0.9rem; margin-bottom: 10px; }
+        .area-row { display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 2px; margin-bottom: 4px;}
+        .area-total { display: flex; justify-content: space-between; font-weight: bold; color: #333; border-top: 1px solid #eee; padding-top: 5px; }
+
+        /* 比較テーブル */
+        .compare-table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .compare-table th { background: #f8f9fa; padding: 10px; font-size: 0.85rem; color: #555; text-align: center; border-bottom: 2px solid #ddd; width: 50%; }
+        .compare-table td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; vertical-align: top; }
+        
+        .price-lg { font-size: 1.4rem; font-weight: bold; color: #d93025; display: block; text-align: center; margin-bottom: 8px;}
+        
+        .detail-list { font-size: 0.8rem; color: #444; }
+        .detail-item { display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed #f0f0f0; align-items: baseline; }
+        .detail-item span:last-child { font-weight: bold; white-space: nowrap; margin-left: 5px; }
+        .detail-label { font-size: 0.75rem; color: #666; }
+        
+        .sub-cost { font-size: 0.75rem; color: #888; font-weight: normal !important;}
+
+        .diff-badge { background: #d93025; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; display: block; margin: 0 auto 5px auto; width: fit-content; animation: pop 1s infinite alternate; }
+        @keyframes pop { from { transform: scale(1); } to { transform: scale(1.1); } }
+        
+        .guts-mark { color: #f57c00; font-size: 0.7rem; border: 1px solid #ffe0b2; background:#fff3e0; padding: 0 3px; border-radius: 4px; margin-left: 3px; }
+        
+        .section-title { font-size: 1rem; font-weight: bold; margin: 20px 0 10px 0; border-left: 4px solid #333; padding-left: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>池の見積りシミュレーター</h1>
+    <h1>池の見積りシミュレーター v6.2</h1>
+    <div style="text-align:center; font-size:0.8rem; color:#666; margin-bottom:10px;">安全策(標準) vs 勝負策(攻め) 内訳詳細版</div>
+    
+    <div class="card">
+        <label>池の名称</label>
+        <input type="text" id="pondName" placeholder="例：道池">
+    </div>
 
-    <label><b>池の名称</b></label>
-    <input type="text" id="pondName" placeholder="例：道池" style="margin-bottom:20px;">
+    <div class="section-title">1. 平面エリア (機械)</div>
+    <div id="flat-container"></div>
+    <button class="btn-add" onclick="addFlatRow()">＋ 平面エリアを追加</button>
 
-    <h2>1. 平面エリア (機械)</h2>
-    <table id="flatTable">
-        <thead><tr><th>場所 (東西南北など)</th><th>長さ(m)</th><th>幅(m)</th><th></th></tr></thead>
-        <tbody>
-            <tr>
-                <td><input type="text" placeholder="例：東側" class="f-name"></td>
-                <td><input type="number" class="f-len" value="0"></td>
-                <td><input type="number" class="f-wid" value="0"></td>
-                <td></td>
-            </tr>
-        </tbody>
-    </table>
-    <button class="btn-add" onclick="addRow('flatTable')">+ 場所を追加</button>
+    <div class="section-title">2. 法面エリア (手刈り)</div>
+    <div id="slope-container"></div>
+    <button class="btn-add" onclick="addSlopeRow()">＋ 法面エリアを追加</button>
 
-    <h2>2. 法面エリア (手刈り)</h2>
-    <table id="slopeTable">
-        <thead><tr><th>場所 (内・外など)</th><th>長さ(m)</th><th>高さ(m)</th><th></th></tr></thead>
-        <tbody>
-            <tr>
-                <td><input type="text" placeholder="例：内法面" class="s-name"></td>
-                <td><input type="number" class="s-len" value="0"></td>
-                <td><input type="number" class="s-hei" value="0"></td>
-                <td></td>
-            </tr>
-        </tbody>
-    </table>
-    <button class="btn-add" onclick="addRow('slopeTable')">+ 場所を追加</button>
+    <button class="btn-calc" onclick="calculate()">比較見積りを作成</button>
 
-    <button class="btn-calc" onclick="calculate()">見積りを計算する</button>
+    <div id="resultArea" class="result-container">
+        
+        <div class="area-detail-card">
+            <div style="font-size:0.9rem; font-weight:bold; color:#1a73e8; margin-bottom:5px;">面積内訳</div>
+            <div id="flatDetailList" class="area-list"></div>
+            <div id="slopeDetailList" class="area-list"></div>
+            <div class="area-total" style="margin-top:5px;">
+                <span>総合計面積:</span>
+                <span><span id="grandTotalArea">0</span> ㎡</span>
+            </div>
+        </div>
 
-    <div class="result-box" id="resultArea">
-        <h3 id="resTitle" style="margin-top:0;">見積結果</h3>
-        <div class="result-row"><span>平面 合計面積:</span> <span><b id="totalFlatArea">0</b> ㎡</span></div>
-        <div class="result-row"><span>法面 合計面積:</span> <span><b id="totalSlopeArea">0</b> ㎡</span></div>
-        <hr>
-        <div class="result-row"><span>必要機械（2000㎡/日）:</span> <span><b id="resMachDays">0</b> 日</span></div>
-        <div class="result-row"><span>必要人数（600㎡/人）:</span> <span><b id="resLabCount">0</b> 人</span></div>
-        <hr>
-        <div class="result-row total-price"><span>合計概算費用:</span> <span>¥<span id="resTotalPrice">0</span></span></div>
+        <h3 style="text-align:center; margin-bottom:5px;">プランA: ハンマーナイフのみ</h3>
+        <div style="text-align:center; font-size:0.8rem; color:#666; margin-bottom:10px;">(狭い場所向け / 積載車不要)</div>
+        
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th style="border-top: 3px solid #1a73e8;">🛡️ 安全策<br><span style="font-weight:normal; font-size:0.7rem;">標準(いつもの)</span></th>
+                    <th style="border-top: 3px solid #f57c00; background:#fff8e1;">🔥 勝負策<br><span style="font-weight:normal; font-size:0.7rem;">20%効率UP</span></th>
+                </tr>
+            </thead>
+            <tbody id="tableA">
+                </tbody>
+        </table>
+
+        <h3 style="text-align:center; margin-top:30px; margin-bottom:5px;">プランB: フレールモア併用</h3>
+        <div style="text-align:center; font-size:0.8rem; color:#666; margin-bottom:10px;">(幅広向け / 要積載車 / 2.5倍速)</div>
+
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th style="border-top: 3px solid #1a73e8;">🛡️ 安全策<br><span style="font-weight:normal; font-size:0.7rem;">標準(いつもの)</span></th>
+                    <th style="border-top: 3px solid #f57c00; background:#fff8e1;">🔥 勝負策<br><span style="font-weight:normal; font-size:0.7rem;">20%効率UP</span></th>
+                </tr>
+            </thead>
+            <tbody id="tableB">
+                </tbody>
+        </table>
+        
+        <div style="font-size:0.75rem; color:#888; margin-top:15px; padding:10px; background:#fff; border-radius:8px;">
+            <b>条件の違い:</b><br>
+            [安全策] 法面600㎡/日, ハンマー2000㎡/日<br>
+            [勝負策] 法面720㎡/日, ハンマー2400㎡/日<br>
+            ※人件費は、機械稼働の実働時間を加味して計算しています。
+        </div>
     </div>
 </div>
 
 <script>
-    function addRow(tableId) {
-        const table = document.getElementById(tableId).getElementsByTagName('tbody')[0];
-        const newRow = table.insertRow();
-        const isFlat = tableId === 'flatTable';
-        newRow.innerHTML = `
-            <td><input type="text" class="${isFlat ? 'f-name' : 's-name'}"></td>
-            <td><input type="number" class="${isFlat ? 'f-len' : 's-len'}" value="0"></td>
-            <td><input type="number" class="${isFlat ? 'f-wid' : 's-hei'}" value="0"></td>
-            <td><button class="btn-remove" onclick="this.parentElement.parentElement.remove()">×</button></td>
+    window.onload = function() {
+        addFlatRow();
+        addSlopeRow();
+    };
+
+    function addFlatRow() {
+        const div = document.createElement('div');
+        div.className = 'card input-row flat-row';
+        div.innerHTML = `
+            <div class="input-group">
+                <label>場所</label>
+                <input type="text" class="val-name" placeholder="東側">
+            </div>
+            <div class="input-group small">
+                <label>長さ</label>
+                <input type="number" class="val-len" placeholder="0">
+            </div>
+            <div class="input-group small">
+                <label>幅</label>
+                <input type="number" class="val-width" placeholder="0">
+            </div>
+            <button class="btn-delete" onclick="this.parentElement.remove()">×</button>
         `;
+        document.getElementById('flat-container').appendChild(div);
     }
 
+    function addSlopeRow() {
+        const div = document.createElement('div');
+        div.className = 'card input-row slope-row';
+        div.innerHTML = `
+            <div class="input-group">
+                <label>場所</label>
+                <input type="text" class="val-name" placeholder="内法面">
+            </div>
+            <div class="input-group small">
+                <label>長さ</label>
+                <input type="number" class="val-len" placeholder="0">
+            </div>
+            <div class="input-group small">
+                <label>高さ</label>
+                <input type="number" class="val-height" placeholder="0">
+            </div>
+            <button class="btn-delete" onclick="this.parentElement.remove()">×</button>
+        `;
+        document.getElementById('slope-container').appendChild(div);
+    }
+
+    // 頑張り計算（15%までは切り捨て）
+    function smartCeil(value) {
+        const integerPart = Math.floor(value);
+        const decimalPart = value - integerPart;
+        const cleanDecimal = parseFloat(decimalPart.toFixed(4));
+        if (cleanDecimal > 0 && cleanDecimal <= 0.15) {
+            return { val: integerPart, guts: true };
+        }
+        return { val: Math.ceil(value), guts: false };
+    }
+
+    // 計算メイン
     function calculate() {
-        let totalFlatArea = 0;
+        // --- データ取得 ---
         let totalSlopeArea = 0;
+        let slopeDetailHtml = '';
+        document.querySelectorAll('.slope-row').forEach(row => {
+            const name = row.querySelector('.val-name').value || '-';
+            const l = parseFloat(row.querySelector('.val-len').value) || 0;
+            const h = parseFloat(row.querySelector('.val-height').value) || 0;
+            const area = l * h;
+            if (area > 0) {
+                totalSlopeArea += area;
+                slopeDetailHtml += `<div class="area-row"><span>法面:${name}</span> <span>${area.toLocaleString()}㎡</span></div>`;
+            }
+        });
 
-        // 平面の集計
-        const fLens = document.getElementsByClassName('f-len');
-        const fWids = document.getElementsByClassName('f-wid');
-        for(let i=0; i<fLens.length; i++) {
-            totalFlatArea += (parseFloat(fLens[i].value) || 0) * (parseFloat(fWids[i].value) || 0);
-        }
+        let totalFlatArea = 0;
+        let flatDetailHtml = '';
+        let flats = []; 
+        document.querySelectorAll('.flat-row').forEach(row => {
+            const name = row.querySelector('.val-name').value || '-';
+            const l = parseFloat(row.querySelector('.val-len').value) || 0;
+            const w = parseFloat(row.querySelector('.val-width').value) || 0;
+            const area = l * w;
+            if (area > 0) {
+                totalFlatArea += area;
+                flatDetailHtml += `<div class="area-row"><span>平面:${name}</span> <span>${area.toLocaleString()}㎡</span></div>`;
+                flats.push({ area: area, width: w });
+            }
+        });
 
-        // 法面の集計
-        const sLens = document.getElementsByClassName('s-len');
-        const sHeis = document.getElementsByClassName('s-hei');
-        for(let i=0; i<sLens.length; i++) {
-            totalSlopeArea += (parseFloat(sLens[i].value) || 0) * (parseFloat(sHeis[i].value) || 0);
-        }
-
-        // 日数・人数の計算 (端数切り上げ)
-        const machDays = Math.ceil(totalFlatArea / 2000);
-        const labCount = Math.ceil(totalSlopeArea / 600);
-
-        // 金額 (単価設定)
-        const machCost = machDays * 20000;
-        const labCost = labCount * 25000;
-
-        // 表示
-        document.getElementById('totalFlatArea').innerText = totalFlatArea.toLocaleString();
-        document.getElementById('totalSlopeArea').innerText = totalSlopeArea.toLocaleString();
-        document.getElementById('resMachDays').innerText = machDays;
-        document.getElementById('resLabCount').innerText = labCount;
-        document.getElementById('resTotalPrice').innerText = (machCost + labCost).toLocaleString();
+        // 面積表示
+        document.getElementById('flatDetailList').innerHTML = flatDetailHtml;
+        document.getElementById('slopeDetailList').innerHTML = slopeDetailHtml;
+        document.getElementById('grandTotalArea').innerText = (totalFlatArea + totalSlopeArea).toLocaleString();
         document.getElementById('resultArea').style.display = 'block';
+
+        // --- 2パターンの計算を実行 ---
+        const resSafe = calcScenario(flats, totalSlopeArea, {
+            slopeCap: 600,     
+            hammerCap: 2000,   
+            hammerSpeed: 4000, 
+            flailCap: 5000,    
+            flailSpeed: 10000  
+        });
+
+        const resAgg = calcScenario(flats, totalSlopeArea, {
+            slopeCap: 720,     
+            hammerCap: 2400,   
+            hammerSpeed: 4800, 
+            flailCap: 6000,    
+            flailSpeed: 12000  
+        });
+
+        // --- テーブル描画 ---
+        renderTable('tableA', resSafe.planA, resAgg.planA);
+        renderTable('tableB', resSafe.planB, resAgg.planB);
+    }
+
+    // シナリオごとの計算ロジック
+    function calcScenario(flats, slopeTotal, settings) {
+        const slopeDays = slopeTotal / settings.slopeCap;
+
+        // プランA (ハンマーのみ)
+        let a_DaysBill = 0;
+        let a_WorkLoad = 0;
+        // プランB (フレール併用)
+        let b_DaysBill = 0;
+        let b_WorkLoad = 0;
+
+        flats.forEach(f => {
+            // A: 全てハンマー
+            a_DaysBill += f.area / settings.hammerCap;
+            a_WorkLoad += f.area / settings.hammerSpeed;
+
+            // B: 幅判定
+            if (f.width >= 2.0) {
+                b_DaysBill += f.area / settings.flailCap;
+                b_WorkLoad += f.area / settings.flailSpeed;
+            } else {
+                b_DaysBill += f.area / settings.hammerCap;
+                b_WorkLoad += f.area / settings.hammerSpeed;
+            }
+        });
+
+        const calcPlan = (dBill, wLoad) => {
+            const days = Math.ceil(dBill);
+            const laborRes = smartCeil(wLoad + slopeDays);
+            return { days: days, labor: laborRes.val, guts: laborRes.guts };
+        };
+
+        return {
+            planA: calcPlan(a_DaysBill, a_WorkLoad),
+            planB: calcPlan(b_DaysBill, b_WorkLoad)
+        };
+    }
+
+    // テーブル描画関数
+    function renderTable(tableId, safe, agg) {
+        const unitMachineA = 20000; 
+        const unitMachineB = 60000; 
+        const unitLabor = 25000;
+
+        // プラン判定と表示ラベルの設定
+        const isPlanA = (tableId === 'tableA');
+        const unitMachine = isPlanA ? unitMachineA : unitMachineB;
         
-        window.scrollTo(0, document.body.scrollHeight);
+        // 内訳テキストの切り替え
+        const machineLabel = isPlanA ? "機械代(2万):" : "機械代(フ3万+ハ2万+積1万):";
+        const laborLabel = "人件費(2.5万):";
+
+        // コスト計算
+        const safeMachineCost = safe.days * unitMachine;
+        const safeLaborCost = safe.labor * unitLabor;
+        const safeTotal = safeMachineCost + safeLaborCost;
+
+        const aggMachineCost = agg.days * unitMachine;
+        const aggLaborCost = agg.labor * unitLabor;
+        const aggTotal = aggMachineCost + aggLaborCost;
+        
+        const diff = safeTotal - aggTotal;
+        const diffBadge = diff > 0 ? `<div class="diff-badge">¥${diff.toLocaleString()} お得!</div>` : '';
+
+        // 頑張りマーク
+        const gutsHtml = (g) => g ? '<span class="guts-mark">残業込</span>' : '';
+
+        // HTML生成ヘルパー (内訳表示をv5.0風に詳細化)
+        const renderDetail = (days, labor, mCost, lCost, guts) => `
+            <div class="detail-list">
+                <div class="detail-item">
+                    <span>機械工期:</span>
+                    <span>${days}日</span>
+                </div>
+                <div class="detail-item">
+                    <span>必要人工:</span>
+                    <span>${labor}人${gutsHtml(guts)}</span>
+                </div>
+                <hr style="margin:5px 0; border:0; border-top:1px dashed #eee;">
+                <div class="detail-item">
+                    <span class="detail-label">${machineLabel}</span>
+                    <span>¥${mCost.toLocaleString()}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">${laborLabel}</span>
+                    <span>¥${lCost.toLocaleString()}</span>
+                </div>
+            </div>
+        `;
+
+        const html = `
+            <tr>
+                <td>
+                    <span class="price-lg">¥${safeTotal.toLocaleString()}</span>
+                    ${renderDetail(safe.days, safe.labor, safeMachineCost, safeLaborCost, safe.guts)}
+                </td>
+                <td style="background:#fff8e1;">
+                    ${diffBadge}
+                    <span class="price-lg">¥${aggTotal.toLocaleString()}</span>
+                    ${renderDetail(agg.days, agg.labor, aggMachineCost, aggLaborCost, agg.guts)}
+                </td>
+            </tr>
+        `;
+        document.getElementById(tableId).innerHTML = html;
     }
 </script>
 
